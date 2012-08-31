@@ -23,6 +23,7 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
+import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.integration.Message;
 import org.springframework.integration.endpoint.MessageProducerSupport;
@@ -38,19 +39,34 @@ import org.springframework.util.Assert;
 public class RedisInboundChannelAdapter extends MessageProducerSupport {
 
 	private final RedisMessageListenerContainer container = new RedisMessageListenerContainer();
+
+	private RedisSerializer<?> redisSerializer;
 	
 	private volatile MessageConverter messageConverter = new SimpleMessageConverter();
 
 	private volatile String[] topics;
 
 
+	public RedisInboundChannelAdapter(RedisConnectionFactory connectionFactory, RedisSerializer<?> redisSerializer) {
+        Assert.notNull(connectionFactory, "connectionFactory must not be null");
+        Assert.notNull(redisSerializer, "rediSerializer must not be null");
+        this.container.setConnectionFactory(connectionFactory);
+        this.redisSerializer = redisSerializer;
+    }
+	
 	public RedisInboundChannelAdapter(RedisConnectionFactory connectionFactory) {
-		Assert.notNull(connectionFactory, "connectionFactory must not be null");
-		this.container.setConnectionFactory(connectionFactory);
+		this(connectionFactory, new StringRedisSerializer());
 	}
 
+    public RedisSerializer<?> getRedisSerializer() {
+        return redisSerializer;
+    }
 
-	public void setTopics(String... topics) {
+    public void setRedisSerializer(RedisSerializer<?> redisSerializer) {
+        this.redisSerializer = redisSerializer;
+    }
+
+    public void setTopics(String... topics) {
 		this.topics = topics;
 	}
 	
@@ -69,7 +85,7 @@ public class RedisInboundChannelAdapter extends MessageProducerSupport {
 		Assert.notEmpty(this.topics, "at least one topis is required for subscription");
 		MessageListenerDelegate delegate = new MessageListenerDelegate();
 		MessageListenerAdapter adapter = new MessageListenerAdapter(delegate);
-		adapter.setSerializer(new StringRedisSerializer());
+		adapter.setSerializer(redisSerializer);
 		List<ChannelTopic> topicList = new ArrayList<ChannelTopic>();
 		for (String topic : this.topics) {
 			topicList.add(new ChannelTopic(topic));
@@ -92,7 +108,7 @@ public class RedisInboundChannelAdapter extends MessageProducerSupport {
 		this.container.stop();
 	}
 
-	private Message<?> convertMessage(String s) {
+	private Message<?> convertMessage(Object s) {
 		return this.messageConverter.toMessage(s);
 	}
 
@@ -100,7 +116,7 @@ public class RedisInboundChannelAdapter extends MessageProducerSupport {
 	private class MessageListenerDelegate {
 
 		@SuppressWarnings("unused")
-		public void handleMessage(String s) {
+		public void handleMessage(Object s) {
 			sendMessage(convertMessage(s));
 		}
 	}
