@@ -40,7 +40,11 @@ public class RedisInboundChannelAdapterParser extends AbstractChannelAdapterPars
 		if (!StringUtils.hasText(connectionFactory)) {
 			connectionFactory = "redisConnectionFactory";
 		}
+		String valueSerializerRef = element.getAttribute("value-serializer-ref");
 		builder.addConstructorArgReference(connectionFactory);
+		if (StringUtils.hasText(valueSerializerRef)) {
+		    builder.addConstructorArgReference(valueSerializerRef);
+        }
 		builder.addPropertyReference("outputChannel", channelName);
 		IntegrationNamespaceUtils.setValueIfAttributeDefined(builder, element, "topics");
 		IntegrationNamespaceUtils.setReferenceIfAttributeDefined(builder, element, "error-channel");

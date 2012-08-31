@@ -166,6 +166,19 @@
 					</xsd:appinfo>
 				</xsd:annotation>
 			</xsd:attribute>
+			<xsd:attribute name="value-serializer-ref" type="xsd:string">
+				<xsd:annotation>
+					<xsd:documentation>
+	Reference to a RedisSerializer. If none is provided, the default
+	StringRedisSerializer will be set.
+					</xsd:documentation>
+					<xsd:appinfo>
+						<tool:annotation kind="ref">
+							<tool:expected-type type="org.springframework.data.redis.serializer.RedisSerializer"/>
+						</tool:annotation>
+					</xsd:appinfo>
+				</xsd:annotation>
+			</xsd:attribute>
 			<xsd:attribute name="topics" type="xsd:string">
 				<xsd:annotation>
 					<xsd:documentation>
